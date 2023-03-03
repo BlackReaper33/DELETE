@@ -3,14 +3,12 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 const ChatMessage = (props) => {
-  const { text, uid, fileUrl } = props.message;
+  const { text, uid } = props.message;
   const messageClass = uid === firebase.auth().currentUser.uid ? 'sent' : 'received';
 
   const [username, setUsername] = useState(null);
   const [taggedText, setTaggedText] = useState(null);
-  const [showImage, setShowImage] = useState(false);
 
   const handleDeleteClick = async () => {
     const confirmed = window.confirm("Are you sure you want to delete this message?");
@@ -61,7 +59,7 @@ const ChatMessage = (props) => {
         setTaggedText(newLinkedText);
       } else {
         const linkRegex = /(?:^|[^"'])(https?:\/\/[^\s"]+)(?=["']|$)/g;
-        const newLinkedText = taggedText ? taggedText.replace(linkRegex, (match) => {
+        const newLinkedText = text ? text.replace(linkRegex, (match) => {
           return `<a href="${match}" style="color: blue;" target="_blank">${match}</a>`;
         }) : null;
         if (newLinkedText !== text) {
@@ -69,66 +67,48 @@ const ChatMessage = (props) => {
         } else {
           setTaggedText(text);
         }
-      }
+      }    
+  }
+    fetchUsernameAndTaggedText();
+  }, [uid, text, taggedText]);
+
+  const usernameClass = messageClass === 'sent' ? 'username-sent' : 'username-received';
+  const [showDelete, setShowDelete] = useState(false);
+
+  const showDeleteButton = () => {
+    if (uid === firebase.auth().currentUser.uid) {
+      setShowDelete(true);
     }
-      fetchUsernameAndTaggedText();
-    }, [uid, text, taggedText]);
-  
-    const usernameClass = messageClass === 'sent' ? 'username-sent' : 'username-received';
-    const [showDelete, setShowDelete] = useState(false);
-  
-    const showDeleteButton = () => {
-      if (uid === firebase.auth().currentUser.uid) {
-        setShowDelete(true);
-      }
-    };
-  
-    const hideDeleteButton = () => {
-      setShowDelete(false);
-    };
-        const messageContent = fileUrl ? (
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-            <img src={fileUrl} alt="chat attachment" className="message-image-preview" />
-          </a>
-        ) : (
-          <>
-            {username && taggedText && (
-              <p
-                className="message-text"
-                dangerouslySetInnerHTML={{
-                  __html: `<span class="${usernameClass}">${username}: </span>${taggedText}`
-                }}
-              />
-            )}
-            {text && (
-              <p>{ taggedText || text}</p>
-            )}
-          </>
-        );
+  };
+
+  const hideDeleteButton = () => {
+    setShowDelete(false);
+  };
+
+  return (
+    <div
+      className={`message ${messageClass}`}
+      onMouseEnter={showDeleteButton}
+      onMouseLeave={hideDeleteButton}
+    >
+    <div className="message-content">
+    {username && taggedText && (
+      <p
+        className="message-text"
+        dangerouslySetInnerHTML={{
+          __html: `<span class="${usernameClass}">${username}: </span>${taggedText}`
+        }}
+      />
+      )}
+    </div>
     
-        return (
-          <div
-            className={`message ${messageClass}`}
-            onMouseEnter={showDeleteButton}
-            onMouseLeave={hideDeleteButton}
-          >
-            <div className="message-content">
-              {messageContent}
-            </div>
-            <div className="message-actions">
-              {uid === firebase.auth().currentUser.uid && (
-                <button className="delete-button" onClick={handleDeleteClick}>
-                  <FontAwesomeIcon icon={faTrash} />
-                </button>
-              )}
-              {showDelete && (
-                <button className="delete-button" onClick={handleDeleteClick}>
-                  <FontAwesomeIcon icon={faTrash} />
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      };
-  
-export default ChatMessage
+    {showDelete && (
+      <button className="delete-button" onClick={handleDeleteClick}>
+        <FontAwesomeIcon icon={faTrash} />
+      </button>
+        )}
+    </div>
+  );
+};
+    
+export default ChatMessage;
